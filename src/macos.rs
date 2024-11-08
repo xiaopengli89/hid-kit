@@ -28,7 +28,8 @@ impl DeviceInfo {
 
         let set = unsafe { manager::IOHIDManagerCopyDevices(m.0) };
         assert_ne!(set, ptr::null());
-        let set = CFObject(set);
+        let set: set::CFSet<hid::base::IOHIDDeviceRef> =
+            unsafe { set::CFSet::wrap_under_create_rule(set) };
 
         extern "C" fn collect(value: *const ffi::c_void, context: *const ffi::c_void) {
             let ctx = unsafe {
@@ -119,7 +120,13 @@ impl DeviceInfo {
             }
         }
         let mut ctx: (Vec<Self>, _) = (vec![], m);
-        unsafe { set::CFSetApplyFunction(set.0, collect, &mut ctx as *const _ as _) };
+        unsafe {
+            set::CFSetApplyFunction(
+                set.as_concrete_TypeRef(),
+                collect,
+                &mut ctx as *const _ as _,
+            )
+        };
         ctx.0
     }
 
