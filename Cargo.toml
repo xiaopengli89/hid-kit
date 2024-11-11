@@ -11,6 +11,11 @@ core-foundation = "0.10.0"
 io-kit-sys = "0.4.1"
 
 [target.'cfg(windows)'.dependencies]
+regex = "1.11.1"
 windows = { version = "0.58.0", features = [
-
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_Devices_HumanInterfaceDevice",
+    "Win32_Devices_DeviceAndDriverInstallation",
 ] }
