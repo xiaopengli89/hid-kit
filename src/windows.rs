@@ -76,7 +76,7 @@ impl DeviceInfo {
                 &mut *(detail.as_mut_ptr()
                     as *mut DeviceAndDriverInstallation::SP_DEVICE_INTERFACE_DETAIL_DATA_W)
             };
-            p.cbSize = mem::size_of_val(p);
+            p.cbSize = mem::size_of_val(p) as _;
             if unsafe {
                 DeviceAndDriverInstallation::SetupDiGetDeviceInterfaceDetailW(
                     info.0,
