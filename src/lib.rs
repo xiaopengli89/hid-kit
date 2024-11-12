@@ -1,7 +1,7 @@
 #[cfg(windows)]
-pub use self::windows::DeviceInfo;
+pub use self::windows::{Device, DeviceInfo};
 #[cfg(target_os = "macos")]
-pub use macos::DeviceInfo;
+pub use macos::{Device, DeviceInfo};
 
 #[cfg(target_os = "macos")]
 mod macos;
