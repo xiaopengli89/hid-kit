@@ -57,12 +57,32 @@ impl DeviceInfo {
             i += 1;
 
             let mut required_size = 0;
-            if unsafe {
+            let _ = unsafe {
                 DeviceAndDriverInstallation::SetupDiGetDeviceInterfaceDetailW(
                     info.0,
                     &d_data,
                     None,
                     0,
+                    Some(&mut required_size),
+                    None,
+                )
+            };
+            if required_size < 1 {
+                continue;
+            }
+
+            let mut detail: Vec<u8> = Vec::with_capacity(required_size as _);
+            let p = unsafe {
+                &mut *(detail.as_mut_ptr()
+                    as *mut DeviceAndDriverInstallation::SP_DEVICE_INTERFACE_DETAIL_DATA_W)
+            };
+            p.cbSize = mem::size_of_val(p);
+            if unsafe {
+                DeviceAndDriverInstallation::SetupDiGetDeviceInterfaceDetailW(
+                    info.0,
+                    &d_data,
+                    Some(p),
+                    required_size,
                     Some(&mut required_size),
                     None,
                 )
@@ -72,25 +92,7 @@ impl DeviceInfo {
                 continue;
             }
 
-            let mut detail: Vec<u8> = Vec::with_capacity(required_size as _);
-            let p = detail.as_mut_ptr()
-                as *mut DeviceAndDriverInstallation::SP_DEVICE_INTERFACE_DETAIL_DATA_W;
-            if unsafe {
-                DeviceAndDriverInstallation::SetupDiGetDeviceInterfaceDetailW(
-                    info.0,
-                    &d_data,
-                    Some(p),
-                    required_size,
-                    None,
-                    None,
-                )
-            }
-            .is_err()
-            {
-                continue;
-            }
-
-            let path = PCWSTR::from_raw(unsafe { *p }.DevicePath.as_ptr());
+            let path = PCWSTR::from_raw(p.DevicePath.as_ptr());
             let r = unsafe {
                 FileSystem::CreateFileW(
                     path,
