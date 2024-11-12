@@ -239,6 +239,10 @@ struct Element {
 
 struct CFObject<T>(*const T);
 
+unsafe impl<T> Send for CFObject<T> {}
+
+unsafe impl<T> Sync for CFObject<T> {}
+
 impl<T> Drop for CFObject<T> {
     fn drop(&mut self) {
         unsafe {
@@ -255,6 +259,10 @@ impl<T> Clone for CFObject<T> {
 }
 
 struct CFObjectMut<T>(*mut T);
+
+unsafe impl<T> Send for CFObjectMut<T> {}
+
+unsafe impl<T> Sync for CFObjectMut<T> {}
 
 impl<T> Drop for CFObjectMut<T> {
     fn drop(&mut self) {
