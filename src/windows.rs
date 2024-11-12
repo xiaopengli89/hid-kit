@@ -178,6 +178,10 @@ pub struct Device {
 }
 
 impl Device {
+    pub fn info(&self) -> &DeviceInfo {
+        &self.parent
+    }
+
     pub fn get_input_report(
         &self,
         report_id: i32,
