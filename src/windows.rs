@@ -20,8 +20,7 @@ pub struct DeviceInfo {
 }
 
 impl DeviceInfo {
-    pub fn enumerate() -> Vec<Self> {
-        let mut info_list = vec![];
+    pub fn enumerate() -> Result<Vec<Self>, super::Error> {
         let guid = unsafe { HumanInterfaceDevice::HidD_GetHidGuid() };
         let info = unsafe {
             DeviceAndDriverInstallation::SetupDiGetClassDevsW(
@@ -31,11 +30,7 @@ impl DeviceInfo {
                 DeviceAndDriverInstallation::DIGCF_PRESENT
                     | DeviceAndDriverInstallation::DIGCF_DEVICEINTERFACE,
             )
-        }
-        .unwrap();
-        if info.is_invalid() {
-            return info_list;
-        }
+        }?;
         let info = OwnedDeviceInfo(info);
 
         let mut i = 0;
@@ -44,6 +39,8 @@ impl DeviceInfo {
 
         let re_pid = regex::Regex::new("[Pp][Ii][Dd]_([A-Fa-f0-9]+)").unwrap();
         let re_vid = regex::Regex::new("[Vv][Ii][Dd]_([A-Fa-f0-9]+)").unwrap();
+
+        let mut info_list = vec![];
 
         while let Ok(_) = unsafe {
             DeviceAndDriverInstallation::SetupDiEnumDeviceInterfaces(
@@ -149,7 +146,7 @@ impl DeviceInfo {
             info_list.push(info);
         }
 
-        info_list
+        Ok(info_list)
     }
 
     pub fn location(&self) -> &str {

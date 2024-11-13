@@ -10,6 +10,8 @@ mod windows;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("unknown")]
+    Unknown,
     #[cfg(target_os = "macos")]
     #[error("{0}")]
     IOReturn(io_kit_sys::ret::IOReturn),

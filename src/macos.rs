@@ -14,20 +14,26 @@ pub struct DeviceInfo {
 }
 
 impl DeviceInfo {
-    pub fn enumerate() -> Vec<Self> {
+    pub fn enumerate() -> Result<Vec<Self>, super::Error> {
         let m = unsafe {
             manager::IOHIDManagerCreate(base::kCFAllocatorDefault, manager::kIOHIDManagerOptionNone)
         };
-        assert_ne!(m, ptr::null_mut());
+        if m.is_null() {
+            return Err(super::Error::Unknown);
+        }
         let m = CFObjectMut(m);
 
         let r = unsafe { manager::IOHIDManagerOpen(m.0, manager::kIOHIDManagerOptionNone) };
-        assert_eq!(r, ret::kIOReturnSuccess);
+        if r != ret::kIOReturnSuccess {
+            return Err(super::Error::IOReturn(r));
+        }
 
         unsafe { manager::IOHIDManagerSetDeviceMatching(m.0, ptr::null()) };
 
         let set = unsafe { manager::IOHIDManagerCopyDevices(m.0) };
-        assert_ne!(set, ptr::null());
+        if set.is_null() {
+            return Err(super::Error::Unknown);
+        }
         let set: set::CFSet<hid::base::IOHIDDeviceRef> =
             unsafe { set::CFSet::wrap_under_create_rule(set) };
 
@@ -62,35 +68,38 @@ impl DeviceInfo {
                         io_kit_sys::CFSTR(keys::kIOHIDDeviceUsagePairsKey),
                     )
                 } as _;
-                if prop.is_null() {
-                    return;
-                }
-                let len = unsafe { array::CFArrayGetCount(prop) };
-                for i in 0..len {
-                    let v: dictionary::CFDictionaryRef =
-                        unsafe { array::CFArrayGetValueAtIndex(prop, i) } as _;
+                if !prop.is_null() {
+                    let len = unsafe { array::CFArrayGetCount(prop) };
+                    for i in 0..len {
+                        let v: dictionary::CFDictionaryRef =
+                            unsafe { array::CFArrayGetValueAtIndex(prop, i) } as _;
 
-                    let usage: number::CFNumberRef = unsafe {
-                        dictionary::CFDictionaryGetValue(
-                            v,
-                            io_kit_sys::CFSTR(keys::kIOHIDDeviceUsageKey) as _,
-                        )
-                    } as _;
-                    let usage = unsafe { number::CFNumber::wrap_under_get_rule(usage) }
-                        .to_i32()
-                        .unwrap();
+                        let usage: number::CFNumberRef = unsafe {
+                            dictionary::CFDictionaryGetValue(
+                                v,
+                                io_kit_sys::CFSTR(keys::kIOHIDDeviceUsageKey) as _,
+                            )
+                        } as _;
+                        let Some(usage) =
+                            unsafe { number::CFNumber::wrap_under_get_rule(usage) }.to_i32()
+                        else {
+                            continue;
+                        };
 
-                    let usage_page: number::CFNumberRef = unsafe {
-                        dictionary::CFDictionaryGetValue(
-                            v,
-                            io_kit_sys::CFSTR(keys::kIOHIDDeviceUsagePageKey) as _,
-                        )
-                    } as _;
-                    let usage_page = unsafe { number::CFNumber::wrap_under_get_rule(usage_page) }
-                        .to_i32()
-                        .unwrap();
+                        let usage_page: number::CFNumberRef = unsafe {
+                            dictionary::CFDictionaryGetValue(
+                                v,
+                                io_kit_sys::CFSTR(keys::kIOHIDDeviceUsagePageKey) as _,
+                            )
+                        } as _;
+                        let Some(usage_page) =
+                            unsafe { number::CFNumber::wrap_under_get_rule(usage_page) }.to_i32()
+                        else {
+                            continue;
+                        };
 
-                    usages.push((usage, usage_page));
+                        usages.push((usage, usage_page));
+                    }
                 }
             }
 
@@ -127,7 +136,7 @@ impl DeviceInfo {
                 &mut ctx as *const _ as _,
             )
         };
-        ctx.0
+        Ok(ctx.0)
     }
 
     pub fn location(&self) -> &str {
