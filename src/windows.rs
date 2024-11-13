@@ -182,19 +182,12 @@ impl Device {
         &self.parent
     }
 
-    pub fn get_input_report(
-        &self,
-        report_id: i32,
-        buffer_size: usize,
-    ) -> Result<Vec<u8>, super::Error> {
-        let mut data = vec![0; 1 + buffer_size];
-        data[0] = report_id as _;
-
+    pub fn get_input_report(&self, buffer: &mut [u8]) -> Result<(), super::Error> {
         let r = unsafe {
             HumanInterfaceDevice::HidD_GetInputReport(
                 Foundation::HANDLE(self.parent.h.as_raw_handle()),
-                data.as_mut_ptr() as _,
-                data.len() as _,
+                buffer.as_mut_ptr() as _,
+                buffer.len() as _,
             )
         }
         .as_bool();
@@ -202,7 +195,7 @@ impl Device {
             return Err(super::Error::WinError(windows::core::Error::from_win32()));
         }
 
-        Ok(data)
+        Ok(())
     }
 }
 

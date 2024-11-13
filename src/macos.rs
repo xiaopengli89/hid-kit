@@ -203,32 +203,23 @@ impl Device {
         &self.parent
     }
 
-    pub fn get_input_report(
-        &self,
-        report_id: i32,
-        buffer_size: usize,
-    ) -> Result<Vec<u8>, super::Error> {
-        let mut data = Vec::with_capacity(1 + buffer_size);
-        unsafe {
-            data.set_len(1);
-        };
-        data[0] = report_id as _;
+    pub fn get_input_report(&self, buffer: &mut [u8]) -> Result<(), super::Error> {
+        let report_id = buffer.get(0).copied().unwrap_or_default();
+        let mut len = buffer.len() as isize;
 
-        let mut len = data.capacity() as isize;
         let r = unsafe {
             device::IOHIDDeviceGetReport(
                 self.parent.elements[0].raw.0,
                 keys::kIOHIDReportTypeInput,
                 report_id as _,
-                data.as_mut_ptr(),
+                buffer.as_mut_ptr(),
                 &mut len,
             )
         };
         if r != ret::kIOReturnSuccess {
             return Err(super::Error::IOReturn(r));
         }
-        unsafe { data.set_len(len as usize) };
-        Ok(data)
+        Ok(())
     }
 }
 
