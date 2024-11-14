@@ -1,5 +1,5 @@
 use std::{
-    mem,
+    mem, ptr,
     os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle},
 };
 use windows::{
@@ -89,7 +89,7 @@ impl DeviceInfo {
                 continue;
             }
 
-            let path = PCWSTR::from_raw(p.DevicePath.as_ptr());
+            let path = PCWSTR::from_raw(ptr::addr_of!(p.DevicePath) as _);
             let r = unsafe {
                 FileSystem::CreateFileW(
                     path,
