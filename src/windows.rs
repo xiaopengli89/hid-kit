@@ -1,6 +1,7 @@
 use std::{
-    mem, ptr,
+    mem,
     os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle},
+    ptr,
 };
 use windows::{
     core::{Free, PCWSTR},

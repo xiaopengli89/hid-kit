@@ -4,7 +4,7 @@ use io_kit_sys::{
     hid::{device, keys, manager},
     ret,
 };
-use std::{ffi, ptr};
+use std::{ffi, mem, ptr};
 
 pub struct DeviceInfo {
     location: String,
@@ -43,6 +43,7 @@ impl DeviceInfo {
             };
 
             let raw = CFObjectMut(value as hid::base::IOHIDDeviceRef);
+            mem::forget(raw.clone());
             let loc = {
                 let prop: number::CFNumberRef = unsafe {
                     device::IOHIDDeviceGetProperty(
