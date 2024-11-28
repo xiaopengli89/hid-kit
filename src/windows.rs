@@ -195,6 +195,22 @@ impl Device {
 
         Ok(())
     }
+
+    pub fn set_output_report(&self, buffer: &[u8]) -> Result<(), super::Error> {
+        let r = unsafe {
+            HumanInterfaceDevice::HidD_SetOutputReport(
+                Foundation::HANDLE(self.parent.h.as_raw_handle()),
+                buffer.as_ptr() as _,
+                buffer.len() as _,
+            )
+        }
+        .as_bool();
+        if !r {
+            return Err(super::Error::WinError(windows::core::Error::from_win32()));
+        }
+
+        Ok(())
+    }
 }
 
 struct OwnedDeviceInfo(DeviceAndDriverInstallation::HDEVINFO);

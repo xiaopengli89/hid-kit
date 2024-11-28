@@ -231,6 +231,25 @@ impl Device {
         }
         Ok(())
     }
+
+    pub fn set_output_report(&self, buffer: &[u8]) -> Result<(), super::Error> {
+        let report_id = buffer.get(0).copied().unwrap_or_default();
+        let len = buffer.len() as isize;
+
+        let r = unsafe {
+            device::IOHIDDeviceSetReport(
+                self.parent.elements[0].raw.0,
+                keys::kIOHIDReportTypeOutput,
+                report_id as _,
+                buffer.as_ptr(),
+                len,
+            )
+        };
+        if r != ret::kIOReturnSuccess {
+            return Err(super::Error::IOReturn(r));
+        }
+        Ok(())
+    }
 }
 
 struct Element {
